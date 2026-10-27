@@ -1,0 +1,926 @@
+% !TEX program = xelatex
+% 软件需求规格说明书：智慧课程学习助手系统
+\documentclass[12pt,a4paper]{ctexart}
+
+\usepackage[margin=2.4cm,top=2.6cm,bottom=2.6cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds,shapes.geometric}
+\usepackage{pgf-umlsd}
+% 时序图纵向行距：默认 0.6 cm 时相邻消息标签易相互压叠
+\def\unitfactor{0.95}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!45!black,
+  urlcolor=blue!45!black,
+  bookmarksnumbered=true,
+  pdftitle={软件需求规格说明书：智慧课程学习助手系统},
+  pdfauthor={课程学习助手项目组}
+}
+
+\definecolor{primary}{HTML}{1F4E79}
+\definecolor{accent}{HTML}{C55A11}
+
+\ctexset{
+  section/format = {\Large\bfseries\color{primary}},
+  subsection/format = {\large\bfseries\color{black}},
+  subsubsection/format = {\normalsize\bfseries\color{black}},
+  paragraph/format = {\normalsize\bfseries}
+}
+
+\setlist[itemize]{leftmargin=1.6em,itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=2pt,topsep=3pt}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4pt}
+
+% pgf-umlsd 的 \mess 用消息文本作为 TikZ 节点名，文本含逗号或括号时解析失败。
+% 此处改为按序号生成节点名，其余绘制行为保持不变。
+\makeatletter
+\renewcommand{\mess}[4][0]{%
+  \stepcounter{seqlevel}%
+  \path (#2)+(0,-\theseqlevel*\unitfactor-0.7*\unitfactor) coordinate (mf\theseqlevel);%
+  \addtocounter{seqlevel}{#1}%
+  \path (#4)+(0,-\theseqlevel*\unitfactor-0.7*\unitfactor) coordinate (mt\theseqlevel);%
+  \draw[->,>=angle 60] (mf\theseqlevel) -- (mt\theseqlevel) node[midway, above] {#3};%
+}
+\makeatother
+\setlength{\parskip}{0.3em}
+
+\newcommand{\req}[1]{\textbf{\color{primary}#1}}
+\newcommand{\term}[1]{\textbf{#1}}
+
+% 需求卡片的统一版式：左栏字段名，右栏内容
+\newenvironment{reqcard}
+  {\begin{description}[leftmargin=6.2em,style=nextline,itemsep=4pt]}
+  {\end{description}}
+
+\tikzset{
+  cls/.style={draw=primary!70, fill=orange!4, text width=3.0cm, align=left,
+              font=\scriptsize, inner sep=3pt, rounded corners=1pt},
+  dep/.style={->, >=open triangle 60, dashed, draw=black!65, semithick},
+  flow/.style={->, >=Stealth, draw=black!70, semithick},
+  act/.style={draw=primary!70, fill=blue!3, rounded corners=6pt,
+              text width=6.2cm, align=center, font=\small, inner sep=4pt},
+  dec/.style={draw=accent!80, fill=orange!6, diamond, aspect=2.4,
+              align=center, font=\small, inner sep=1pt},
+  state/.style={draw=primary!70, fill=blue!4, rounded corners=8pt,
+                minimum width=2.7cm, minimum height=0.9cm, align=center, font=\small},
+  layer/.style={draw=gray!45, fill=gray!5, rounded corners=3pt},
+  func/.style={draw=primary!65, fill=white, minimum width=2.9cm,
+               minimum height=0.8cm, align=center, font=\footnotesize},
+  actorpic/.pic={
+    \draw[thick] (0,0.32) circle (0.16);
+    \draw[thick] (0,0.16) -- (0,-0.30);
+    \draw[thick] (-0.26,0.02) -- (0.26,0.02);
+    \draw[thick] (0,-0.30) -- (-0.22,-0.68);
+    \draw[thick] (0,-0.30) -- (0.22,-0.68);
+  }
+}
+
+\newcommand{\umlsep}{\par\vspace{1pt}\rule{\linewidth}{0.4pt}\vspace{1pt}\par}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2.2cm}
+  {\Huge\bfseries\color{primary} 软件需求规格说明书\par}
+  \vspace{0.6cm}
+  {\LARGE 智慧课程学习助手系统\par}
+  \vspace{2.6cm}
+
+  \renewcommand{\arraystretch}{1.45}
+  \begin{tabular}{@{}L{3.2cm}L{8.4cm}@{}}
+    \toprule
+    文档编号 & SRS-20261020 \\
+    文档版本 & 1.0（评审稿） \\
+    编制日期 & 2026-10-20 \\
+    文档范围 & 功能需求、非功能需求、全局业务规则、UML 模型、需求追踪 \\
+    适用范围 & 需求评审、设计输入与验收依据 \\
+    \bottomrule
+  \end{tabular}
+
+  \vfill
+  {\small 本文件定义系统的功能需求、非功能需求、业务规则与 UML 模型，\\
+  作为设计、开发与验收的依据。\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{文档说明}
+
+\subsection{目的与范围}
+
+本文件定义智慧课程学习助手系统（以下简称“系统”）的软件需求。系统面向高校课程教学场景，为学生提供基于课程资料的 AI 问答、作业辅导与学习管理服务，为教师提供课程资料与课程信息维护能力。
+
+需求以可验证为组织原则：功能需求给出参与者、前置条件、主流程、备选流、异常流、后置条件、业务规则与验收标准；非功能需求给出可度量的指标；功能依赖与领域结构以 UML 模型表达。
+
+本文件不覆盖：界面视觉规范、部署与运维手册、AI 模型选型与训练方案、学校统一身份认证平台的内部实现。
+
+\subsection{术语与缩略语}
+
+\begin{longtable}{@{}L{3.4cm}L{11.8cm}@{}}
+  \toprule
+  \textbf{术语} & \textbf{说明} \\
+  \midrule
+  \endhead
+  知识片段 & 课程资料中可被独立引用的内容单元，保留来源资料、页码与片段顺序。 \\
+  引用 & 回答中指向知识片段的标注，可回溯到原始资料的具体位置。 \\
+  课程上下文 & 当前会话绑定的课程；决定可检索的资料范围。 \\
+  会话 & 一次连续问答的上下文集合，包含多轮消息。 \\
+  首字时延 & 从提交问题到界面出现第一个回答字符的时间。 \\
+  学术诚信策略 & 限制作业辅导输出可直接提交的完整解答的课程级配置。 \\
+  P95 & 95 分位值：95\% 的观测样本不超过该值。 \\
+  \bottomrule
+\end{longtable}
+
+\subsection{角色定义}
+
+\begin{longtable}{@{}L{2.6cm}L{6.0cm}L{6.4cm}@{}}
+  \toprule
+  \textbf{角色} & \textbf{职责} & \textbf{权限边界} \\
+  \midrule
+  \endhead
+  学生 & 提问、使用作业辅导、生成习题、查看进度与错题、维护学习计划 & 仅可访问本人已选课程的资料与本人数据 \\
+  教师 & 维护所授课程信息与课程资料、查看本课程引用与问答记录 & 仅可操作本人任课课程，不可查看其他教师课程的学生数据 \\
+  课程管理员 & 配置课程开设、选课关系与学术诚信策略 & 不参与资料内容编辑 \\
+  系统管理员 & 账号映射、配额与审计查询 & 不读取对话正文，仅见审计元数据 \\
+  统一身份认证平台 & 外部系统，提供登录与身份信息 & 不存储本系统业务数据 \\
+  AI 推理服务 & 外部系统，提供大模型生成能力 & 仅接收脱敏后的问题与课程片段 \\
+  \bottomrule
+\end{longtable}
+
+% =====================================================================
+\section{系统概述}
+
+\subsection{产品定位与边界}
+
+系统是课程教学的辅助工具，不是替代教学的自动作答系统。其核心能力是：把教师上传的课程资料转化为可检索的知识库，在问答中优先依据课程资料作答并给出可回溯引用；在作业场景中只提供思路与分步提示，避免替代学生完成作业。
+
+系统边界如下：
+
+\begin{itemize}
+  \item \textbf{系统内}：问答与会话管理、课程知识库、作业辅导、习题生成、学习进度、错题诊断、学习计划、课程与资料管理、权限控制。
+  \item \textbf{系统外}：统一身份认证（账号与身份信息）、AI 推理服务（生成能力）、对象存储（原始文件）、日志与审计平台。
+\end{itemize}
+
+\subsection{全局业务规则}
+
+全局规则对所有功能生效，单个需求卡片不再重复展开。
+
+\begin{longtable}{@{}L{1.6cm}L{5.2cm}L{8.2cm}@{}}
+  \toprule
+  \textbf{编号} & \textbf{规则} & \textbf{说明与判定} \\
+  \midrule
+  \endhead
+  BR-01 & 课程数据隔离 & 学生只能检索与查看已选课程的资料；教师只能操作任课课程。越权请求被拒绝并写入审计。 \\
+  BR-02 & 回答依据必须可区分 & 使用课程资料时标注引用；未使用时必须显式标注“未使用课程资料”，不得让两种来源在界面上无法区分。 \\
+  BR-03 & 学术诚信边界 & 作业辅导默认只输出题意分析、方法选择与分步提示，不输出可直接提交的完整解答；教师可为课程开启“允许完整解析”，开启后输出须标注“仅供参考”。 \\
+  BR-04 & 引用不得虚构 & 引用必须指向知识库中真实存在的资料与位置；检索无命中时不得生成任何资料出处。 \\
+  BR-05 & 数据留存与隐私 & 学生输入不用于训练公共模型；对话默认保留 1 个学年，到期后匿名化；审计记录不包含可直接识别学生身份的明文信息。 \\
+  BR-06 & 资料授权 & 教师上传资料时须确认拥有使用权；系统仅索引教师上传的授权资料，不主动抓取外部内容。 \\
+  \bottomrule
+\end{longtable}
+
+% =====================================================================
+\section{需求优先级与实施分层}
+
+\subsection{需求优先级排序}
+
+优先级依据用户价值、功能依赖关系与实现成本确定。实施层级对应第 \ref{sec:layer} 节的依赖分层，用于决定开发顺序，不改变业务优先级。
+
+\begin{longtable}{@{}C{0.8cm}C{0.9cm}L{3.0cm}C{1.0cm}C{2.6cm}L{5.0cm}@{}}
+  \toprule
+  \textbf{排名} & \textbf{编号} & \textbf{功能} & \textbf{优先级} & \textbf{实施层级} & \textbf{排序理由} \\
+  \midrule
+  \endhead
+  1 & F02 & AI 智能问答 & 高 & L1 核心 & 系统核心价值，直接满足知识问答需求 \\
+  2 & F05 & 课程知识库管理 & 高 & L0 基础 & 为课程问答提供可靠知识来源，是 L1 的前置 \\
+  3 & F06 & AI 作业辅导 & 高 & L2 延伸 & 高频场景，复用问答能力，依赖 L1 稳定 \\
+  4 & F04 & 用户身份认证 & 高 & L0 基础 & 安全登录与权限控制的基础，所有功能的前置 \\
+  5 & F10 & 课程选择与切换 & 中 & L0 基础 & 决定检索范围，问答准确性的前提 \\
+  6 & F08 & 课程资料溯源 & 中 & L1 核心 & 提升回答可信度，依赖知识库与检索 \\
+  7 & F03 & 智能习题生成 & 中 & L2 延伸 & 辅助巩固，内容质量控制成本较高 \\
+  8 & F01 & 学习进度管理 & 中 & L2 延伸 & 独立价值明确，与核心问答耦合低 \\
+  9 & F09 & 个性化学习计划 & 低 & L3 增强 & 依赖进度、课程与目标数据，前期无法稳定产出 \\
+  10 & F07 & 错题诊断分析 & 低 & L3 增强 & 依赖作答数据积累，冷启动阶段价值有限 \\
+  \bottomrule
+\end{longtable}
+
+\subsection{实施分层与依赖模型}
+\label{sec:layer}
+
+业务优先级回答“先做哪个价值最高”，实施顺序回答“哪个必须先完成”。二者在 F02 与 F05 上出现差异：F02 的用户价值最高，但 F05 未就绪时课程问答无法达标。因此按依赖闭包划分四层，层内并行、跨层串行。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  x=1cm,y=1cm,
+  every node/.style={font=\footnotesize}
+]
+  % 层级背景
+  \foreach \y/\name/\col in {0/L0 基础层/gray!6, -2.4/L1 核心层/blue!5,
+                             -4.8/L2 延伸层/orange!5, -7.0/L3 增强层/green!5} {
+    \node[layer, fill=\col, minimum width=12.4cm, minimum height=1.9cm, anchor=north] at (-2.3,\y+0.95) {};
+    \node[font=\scriptsize\bfseries, anchor=east] at (-8.7,\y) {\name};
+  }
+
+  % L0
+  \node[func] (f04) at (-5.4,0) {F04 身份认证};
+  \node[func] (f10) at (-2.3,0) {F10 课程选择};
+  \node[func] (f05) at (0.8,0) {F05 知识库管理};
+  % L1
+  \node[func] (f02) at (-2.3,-2.4) {F02 AI 智能问答};
+  \node[func] (f08) at (0.8,-2.4) {F08 资料溯源};
+  % L2
+  \node[func] (f06) at (-5.4,-4.8) {F06 作业辅导};
+  \node[func] (f03) at (-2.3,-4.8) {F03 习题生成};
+  \node[func] (f01) at (0.8,-4.8) {F01 进度管理};
+  % L3
+  \node[func] (f07) at (-2.3,-7.0) {F07 错题诊断};
+  \node[func] (f09) at (0.8,-7.0) {F09 学习计划};
+
+  % 依赖（UML 依赖箭头由依赖者指向被依赖者）
+  \draw[dep] (f05.north) to[out=110,in=70] node[above,font=\scriptsize]{BR-01 权限} (f04.north);
+  \draw[dep] (f02) -- (f05);
+  \draw[dep] (f02) -- (f10);
+  \draw[dep] (f08) -- (f05);
+  \draw[dep] (f06) -- (f02);
+  \draw[dep] (f03) -- (f02);
+  \draw[dep] (f01) -- (f02);
+  \draw[dep] (f07) -- (f01);
+  \draw[dep] (f09) -- (f01);
+\end{tikzpicture}
+\caption{功能依赖分层图（UML 依赖关系，虚线箭头表示“依赖于”）}
+\label{fig:layer}
+\end{figure}
+
+图 \ref{fig:layer} 的说明：F04 与 F10 是横向约束，分别向所有需要身份与课程上下文的功能提供前提；F05 同时支撑 F02 与 F08；F02 是 L2 三条功能的共同前置；F01 产生的作答与进度数据支撑 L3 两项分析类功能。
+
+% =====================================================================
+\section{功能需求规格}
+
+\subsection{功能清单}
+
+\begin{longtable}{@{}C{1.0cm}L{3.6cm}L{2.4cm}C{1.0cm}L{3.4cm}L{2.2cm}@{}}
+  \toprule
+  \textbf{编号} & \textbf{功能名称} & \textbf{主要参与者} & \textbf{优先级} & \textbf{依赖} & \textbf{规格位置} \\
+  \midrule
+  \endhead
+  F01 & 学习进度管理 & 学生 & 中 & F02、F03 & \ref{srs-f01} \\
+  F02 & AI 智能问答 & 学生 & 高 & F05、F10 & \ref{srs-001} \\
+  F03 & 智能习题生成 & 学生、教师 & 中 & F05 & \ref{srs-f03} \\
+  F04 & 用户身份认证 & 全部角色 & 高 & 统一认证 & \ref{srs-f04} \\
+  F05 & 课程知识库管理 & 教师 & 高 & F04 & \ref{srs-002} \\
+  F06 & AI 作业辅导 & 学生 & 高 & F02、F05 & \ref{srs-003} \\
+  F07 & 错题诊断分析 & 学生 & 低 & F01、F03 & \ref{srs-f07} \\
+  F08 & 课程资料溯源 & 学生、教师 & 中 & F05、F02 & \ref{srs-f08} \\
+  F09 & 个性化学习计划 & 学生 & 低 & F01、F10 & \ref{srs-f09} \\
+  F10 & 课程选择与切换 & 学生 & 中 & F04 & \ref{srs-f10} \\
+  \bottomrule
+\end{longtable}
+
+\subsection{用例模型}
+
+\subsubsection{用例图}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  uc/.style={ellipse, draw=primary!60, fill=blue!4, minimum width=3.4cm,
+             minimum height=0.9cm, align=center, font=\footnotesize, inner sep=1pt},
+  bus/.style={draw=black!60, semithick}
+]
+  % 系统边界
+  \draw[draw=gray!55, fill=gray!3, rounded corners=5pt] (2.4,-1.4) rectangle (13.6,12.0);
+  \node[font=\small\bfseries, anchor=north] at (8.0,11.85) {智慧课程学习助手系统};
+
+  % 参与者
+  \pic at (0.7,6.4) {actorpic};
+  \node[font=\small] at (0.7,7.15) {学生};
+  \pic at (15.3,9.4) {actorpic};
+  \node[font=\small] at (15.3,10.15) {教师};
+
+  % 学生总线
+  \draw[bus] (0.95,6.4) -- (2.95,6.4);
+  \draw[bus] (2.95,10.4) -- (2.95,0.4);
+  % 教师总线
+  \draw[bus] (15.05,9.4) -- (12.95,9.4);
+  \draw[bus] (12.95,10.4) -- (12.95,8.4);
+
+  % 学生用例（左列）
+  \node[uc] (u02) at (5.4,10.4) {AI 智能问答};
+  \node[uc] (u06) at (5.4,8.4) {AI 作业辅导};
+  \node[uc] (u03) at (5.4,6.8) {智能习题生成};
+  \node[uc] (u01) at (5.4,5.2) {学习进度管理};
+  \node[uc] (u07) at (5.4,3.6) {错题诊断分析};
+  \node[uc] (u09) at (5.4,2.0) {个性化学习计划};
+  \node[uc] (u10) at (5.4,0.4) {课程选择与切换};
+
+  % 教师用例（右列）
+  \node[uc] (u05) at (10.8,10.4) {课程知识库管理};
+  \node[uc] (u08) at (10.8,8.4) {课程资料溯源};
+
+  % 关联线
+  \foreach \u/\y in {u02/10.4, u06/8.4, u03/6.8, u01/5.2, u07/3.6, u09/2.0, u10/0.4} {
+    \draw[bus] (2.95,\y) -- (\u.west);
+  }
+  \foreach \u/\y in {u05/10.4, u08/8.4} {
+    \draw[bus] (12.95,\y) -- (\u.east);
+  }
+
+  % include 关系：作业辅导包含问答
+  \draw[->, >=open triangle 60, dashed, draw=black!70] (u06.north) -- (u02.south)
+    node[midway, font=\scriptsize, anchor=west, xshift=1pt]{«include»};
+\end{tikzpicture}
+\caption{系统用例图}
+\label{fig:usecase}
+\end{figure}
+
+所有用例以“已通过统一身份认证登录”为前置条件，登录本身由外部认证平台完成，故不在图中重复建模。«include» 表示每次作业辅导都会执行一次问答能力调用。
+
+\subsection{需求 SRS-001：AI 智能问答}
+\label{srs-001}
+
+\begin{reqcard}
+  \item[编号] SRS-001（对应 F02）
+  \item[名称] AI 智能问答
+  \item[参与者] 学生（主）；AI 推理服务（支持）
+  \item[目标] 学生在当前课程上下文中用自然语言提问，获得基于课程资料的解释，并可核对回答所依据的资料位置。
+  \item[前置条件] 已通过统一身份认证；会话已创建；若需课程资料依据，须已选修并选中课程。
+  \item[触发] 学生在问答界面提交问题。
+  \item[输入] 问题文本，长度 1 至 2000 个字符；可选的课程标识；会话标识。
+  \item[主流程]
+    \begin{enumerate}[label=M\arabic*,leftmargin=2.6em]
+      \item 学生输入问题并提交，界面携带会话标识与当前课程标识。
+      \item 系统校验会话有效、问题非空、长度未超限、内容未命中安全策略。
+      \item 系统确定课程上下文：显式指定的课程优先，否则取会话当前课程。
+      \item 系统在该课程范围内检索与问题最相关的课程片段，最多取 8 个。
+      \item 系统要求回答优先依据检索到的片段，并标注引用；无片段时要求标注“未使用课程资料”。
+      \item 系统调用 AI 推理服务生成回答，以流式方式返回。
+      \item 界面逐字显示回答；回答完成后展示引用列表，引用可跳转到资料原文位置。
+      \item 系统记录本次问答的审计信息：会话、课程、引用片段与响应耗时。
+    \end{enumerate}
+  \item[备选流]
+    \begin{enumerate}[label=A\arabic*,leftmargin=2.6em]
+      \item 未选择课程：按通用模式回答，界面标注“未关联课程，回答不含课程资料依据”。
+      \item 检索无命中：降级为通用回答，并按 BR-02 标注。
+      \item 问题超过 2000 字符：阻止提交，提示当前长度与上限，保留已输入内容。
+    \end{enumerate}
+  \item[异常流]
+    \begin{enumerate}[label=E\arabic*,leftmargin=2.6em]
+      \item AI 服务超时（超过 20 秒）或不可用：提示“服务暂时不可用，请稍后重试”，保留问题文本与原会话。
+      \item 回答传输中断：保留已生成内容，提供“继续生成”与“重新提问”，不重复计费。
+      \item 触发配额限制：提示剩余可用次数与恢复时间。
+      \item 内容安全拦截：返回统一提示，不透露拦截规则，记录审计但不计入引用统计。
+    \end{enumerate}
+  \item[后置条件] 会话中新增一条问题与回答；审计记录完整；引用与知识片段一一对应。
+  \item[业务规则] BR-01、BR-02、BR-04、BR-05 适用。
+  \item[量化指标] 首字时延 P95 $\leq$ 3 秒；完整回答 P95 $\leq$ 20 秒；检索 P95 $\leq$ 800 毫秒；抽样 200 条回答中，引用指向段落与回答内容一致的比例 $\geq$ 95\%。
+  \item[依赖] F05 课程知识库管理；F10 课程选择与切换；外部 AI 推理服务。
+  \item[验收标准]
+\end{reqcard}
+
+\begin{longtable}{@{}C{2.1cm}L{4.2cm}L{4.4cm}L{4.0cm}@{}}
+  \toprule
+  \textbf{编号} & \textbf{Given} & \textbf{When} & \textbf{Then} \\
+  \midrule
+  \endhead
+  AC-001-1 & 已登录且选中某课程，知识库中有相关资料 & 提交课程内有效问题 & 回答在 20 秒内完成，首字在 3 秒内出现，且回答附有至少一条可跳转引用 \\
+  AC-001-2 & 同一会话，已完成一次提问 & 提交空白或仅含空格的问题 & 提交被阻止，提示“请输入问题”，且不产生任何模型调用 \\
+  AC-001-3 & 已选修两门课程 & 在课程 A 上下文提问课程 B 的专属概念 & 检索范围限于课程 A，回答标注“未使用课程资料”或说明未命中 \\
+  AC-001-4 & AI 服务被模拟为超时 & 提交问题 & 20 秒后显示服务不可用提示，问题文本保留，可重新提交 \\
+  AC-001-5 & 知识库中无相关片段 & 提交问题 & 回答中不出现任何资料名、页码或链接，并标注未使用课程资料 \\
+  AC-001-6 & 回答传输在生成中途断开 & 网络恢复后点击“继续生成” & 已生成内容保留，继续部分与原有内容衔接，不重复输出 \\
+  \bottomrule
+\end{longtable}
+
+\begin{figure}[H]
+\centering
+\begin{sequencediagram}
+  \newthread{S}{学生}
+  \newinst[4.0]{W}{学习助手系统}
+  \newinst[2.6]{A}{AI 推理服务}
+
+  \mess{S}{提交问题}{W}
+  \begin{callself}{W}{校验问题与课程上下文}{通过}
+  \end{callself}
+  \begin{callself}{W}{检索课程片段}{片段}
+  \end{callself}
+  \begin{call}{W}{请求生成(问题与片段)}{A}{流式内容}
+  \end{call}
+  \mess{W}{流式显示回答}{S}
+  \mess{W}{完成并展示引用}{S}
+\end{sequencediagram}
+\caption{顺序图：AI 智能问答}
+\label{fig:seq-qa}
+\end{figure}
+
+顺序图对应主流程 M1 至 M7：检索与生成是两次独立处理，检索无命中不影响通用回答，生成失败才进入异常流 E1。
+
+\subsection{需求 SRS-002：课程知识库管理}
+\label{srs-002}
+
+\begin{reqcard}
+  \item[编号] SRS-002（对应 F05）
+  \item[名称] 课程知识库管理
+  \item[参与者] 教师（主）；对象存储（支持）
+  \item[目标] 教师维护课程资料，使课程问答能够基于最新、可控的资料作答。
+  \item[前置条件] 已登录；具备目标课程的任课或管理权限（BR-01）。
+  \item[触发] 教师上传、更新或删除课程资料。
+  \item[输入] 目标课程；资料文件（PDF、DOCX、TXT，单文件不超过 20 MB）；资料标题与可见范围。
+  \item[主流程]
+    \begin{enumerate}[label=M\arabic*,leftmargin=2.6em]
+      \item 教师选择课程并上传文件，填写标题。
+      \item 系统校验身份、任课关系、文件格式、文件大小与内容类型。
+      \item 系统识别内容相同的文件：同一课程内视为重复，提示教师且不重复入库。
+      \item 系统保存原始文件并登记资料记录，状态置为“已接收”。
+      \item 系统异步提取文本，划分为保留页码与顺序的知识片段。
+      \item 系统建立检索索引，记录来源资料、页码与片段顺序。
+      \item 全部片段处理成功后，资料状态置为“可用”，记录处理耗时与片段数。
+      \item 更新资料时生成新版本；检索只返回新版本内容，不返回被替换的旧版本。
+      \item 删除资料后，资料立即退出检索范围，记录置为“已删除”，保留审计痕迹。
+    \end{enumerate}
+  \item[备选流]
+    \begin{enumerate}[label=A\arabic*,leftmargin=2.6em]
+      \item 处理超时（超过 120 秒）：标记“处理失败”，允许重试，重试不产生重复资料记录。
+      \item 部分片段处理失败：整份资料判为失败，不进入检索，避免出现半可用资料。
+      \item 文件无文本层：提示“未提取到文本”，建议上传可复制文本的版本。
+    \end{enumerate}
+  \item[异常流]
+    \begin{enumerate}[label=E\arabic*,leftmargin=2.6em]
+      \item 无权限或非任课教师：拒绝操作并记录审计。
+      \item 格式不支持或超过 20 MB：拒绝并提示允许的格式与大小上限。
+      \item 文件损坏或无法解析：显示失败原因，资料不标记为可用。
+    \end{enumerate}
+  \item[后置条件] 资料记录、原始文件与检索索引三者状态一致；检索结果只包含“可用”状态的资料。
+  \item[业务规则] BR-01、BR-04、BR-06 适用。
+  \item[量化指标] 20 MB 文件从上传到“可用”P95 $\leq$ 120 秒；处理失败可重试且不产生重复记录；删除后 5 分钟内检索不再命中该资料。
+  \item[依赖] F04 用户身份认证；为 F02、F08 提供数据。
+  \item[验收标准]
+\end{reqcard}
+
+\begin{longtable}{@{}C{2.1cm}L{4.2cm}L{4.4cm}L{4.0cm}@{}}
+  \toprule
+  \textbf{编号} & \textbf{Given} & \textbf{When} & \textbf{Then} \\
+  \midrule
+  \endhead
+  AC-002-1 & 教师已登录且为课程任课教师 & 上传 15 MB 的 PDF & 资料在 120 秒内变为“可用”，并可按标题检索到片段 \\
+  AC-002-2 & 同一教师已上传同一文件 & 再次上传相同文件 & 提示内容重复，不新增资料记录 \\
+  AC-002-3 & 教师已登录 & 上传 25 MB 的 DOCX & 拒绝并提示单文件上限 20 MB，资料列表无新增项 \\
+  AC-002-4 & 资料已“可用” & 教师上传同名新版本文件 & 检索只返回新版本内容，旧版本片段不再命中 \\
+  AC-002-5 & 资料已“可用” & 教师删除该资料 & 5 分钟内在资料列表与检索结果中均不可见 \\
+  AC-002-6 & 学生账号已登录 & 尝试修改课程资料 & 操作被拒绝，资料未发生变化，审计中有越权记录 \\
+  AC-002-7 & 上传文件为无文本层扫描件 & 提交处理 & 状态为“处理失败”，给出“未提取到文本”原因，不进入检索 \\
+  \bottomrule
+\end{longtable}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=0.95cm,y=0.95cm]
+  % 初始伪状态
+  \fill (-2.4,0) circle (0.09);
+
+  \node[state] (recv)  at (0,0)    {已接收};
+  \node[state] (parse) at (4,0)    {解析中};
+  \node[state] (index) at (8,0)    {索引中};
+  \node[state] (ready) at (12,0)   {可用};
+  \node[state] (fail)  at (8,-2.8) {处理失败};
+  \node[state] (del)   at (12,-2.8){已删除};
+
+  % 初始转移
+  \draw[flow] (-2.3,0) -- (recv.west);
+
+  \draw[flow] (recv) -- node[above,font=\scriptsize]{开始处理} (parse);
+  \draw[flow] (parse) -- node[above,font=\scriptsize]{片段划分完成} (index);
+  \draw[flow] (index) -- node[above,font=\scriptsize]{索引成功} (ready);
+  \draw[flow] (index.south) -- node[right,font=\scriptsize]{索引失败} (fail.north);
+  \draw[flow] (parse.south) to[out=-80,in=165] node[below,font=\scriptsize,pos=0.55]{解析失败} (fail.north west);
+  \draw[flow] (fail.west) to[out=180,in=-95] node[left,font=\scriptsize,pos=0.62]{重新上传} (recv.south);
+  \draw[flow] (ready.north) to[out=95,in=85] node[above,font=\scriptsize]{更新版本} (parse.north);
+  \draw[flow] (ready.south) -- node[right,font=\scriptsize]{删除} (del.north);
+
+  % 终态
+  \draw[flow] (del.south) -- (12,-3.9);
+  \draw[black, thick] (12,-4.0) circle (0.14);
+  \draw[black, thick, fill=white] (12,-4.0) circle (0.09);
+\end{tikzpicture}
+\caption{状态图：课程资料处理生命周期}
+\label{fig:state-material}
+\end{figure}
+
+状态图中“处理失败”可经重试回到“已接收”；“可用”资料更新时重新进入解析；“已删除”是终态，不可恢复，但审计记录保留。
+
+\begin{figure}[H]
+\centering
+\begin{sequencediagram}
+  \newthread{T}{教师}
+  \newinst[3.6]{W}{学习助手系统}
+  \newinst[2.2]{O}{对象存储}
+
+  \mess{T}{上传课程资料}{W}
+  \begin{callself}{W}{校验权限、格式、大小与重复}{通过}
+  \end{callself}
+  \begin{call}{W}{保存原始文件}{O}{保存成功}
+  \end{call}
+  \mess{W}{受理（处理中）}{T}
+  \begin{callself}[2]{W}{提取文本并建立检索索引}{完成 / 失败}
+  \end{callself}
+  \mess{W}{处理结果（可用 / 失败原因）}{T}
+\end{sequencediagram}
+\caption{顺序图：课程资料上传与索引}
+\label{fig:seq-material}
+\end{figure}
+
+该链路中“受理”与“处理结果”是两次独立响应，教师无需等待处理完成即可关闭页面；处理结果通过页面状态与通知呈现。
+
+\subsection{需求 SRS-003：AI 作业辅导}
+\label{srs-003}
+
+\begin{reqcard}
+  \item[编号] SRS-003（对应 F06）
+  \item[名称] AI 作业辅导
+  \item[参与者] 学生（主）；AI 推理服务、课程知识库（支持）
+  \item[目标] 学生理解题目要求与解题方法，获得可追问的分步提示，而不是可直接提交的答案。
+  \item[前置条件] 已登录；已创建或进入辅导会话。
+  \item[触发] 学生提交作业题目、已知条件与具体求助点。
+  \item[输入] 题目文本、已知条件、求助点，合计不超过 2000 个字符；可选课程标识。
+  \item[主流程]
+    \begin{enumerate}[label=M\arabic*,leftmargin=2.6em]
+      \item 学生输入题目与已知条件，指明需要帮助的环节。
+      \item 系统校验非空、长度与内容合规。
+      \item 系统识别所属课程与知识点，检索相关课程片段（若有课程上下文）。
+      \item 系统判断条件充分性：缺少确定解法的必要信息时先追问，不将不确定条件当作已知事实。
+      \item 系统生成题意分析、方法选择与分步提示；按 BR-03 默认不输出最终答案。
+      \item 学生针对某一步追问，系统结合当前会话的题目与前序回答解释。
+      \item 系统保存会话，并记录是否触发学术诚信策略。
+    \end{enumerate}
+  \item[备选流]
+    \begin{enumerate}[label=A\arabic*,leftmargin=2.6em]
+      \item 教师为该课程开启“允许完整解析”：输出完整解法，并固定标注“仅供参考，请自行完成”。
+      \item 输入内容不是题目：提示补充有效题目。
+      \item 题目超出课程范围：按通用模式辅导，并标注未使用课程资料。
+    \end{enumerate}
+  \item[异常流]
+    \begin{enumerate}[label=E\arabic*,leftmargin=2.6em]
+      \item 题目为空：阻止提交，提示“请补全题目”。
+      \item 条件不足且学生不补充：保持在追问状态，不生成猜测性解答。
+      \item AI 服务异常：提示失败并允许重新请求，已输入内容不丢失。
+    \end{enumerate}
+  \item[后置条件] 会话中保留题目、分步提示与追问记录；学术诚信标记与课程配置一致。
+  \item[业务规则] BR-02、BR-03、BR-05 适用。
+  \item[量化指标] 未开启完整解析的课程中，提示不出现完整最终答案的比例为 100\%；首条提示 P95 $\leq$ 5 秒；追问解释 P95 $\leq$ 6 秒。
+  \item[依赖] F02 AI 智能问答；F05 课程知识库管理。
+  \item[验收标准]
+\end{reqcard}
+
+\begin{longtable}{@{}C{2.1cm}L{4.2cm}L{4.4cm}L{4.0cm}@{}}
+  \toprule
+  \textbf{编号} & \textbf{Given} & \textbf{When} & \textbf{Then} \\
+  \midrule
+  \endhead
+  AC-003-1 & 课程未开启完整解析 & 提交一道有完整解法的数学题 & 返回题意分析与分步提示，不包含可直接提交的最终答案 \\
+  AC-003-2 & 已完成一次辅导 & 追问“第二步为什么这样变形” & 回答引用当前会话的题目与前序步骤，不重新索要题目 \\
+  AC-003-3 & 题目缺少必要参数 & 提交题目 & 系统指出缺失的条件并等待补充，不虚构参数值 \\
+  AC-003-4 & 题目为空 & 点击提交 & 阻止提交并提示“请补全题目”，无模型调用 \\
+  AC-003-5 & 课程已开启完整解析 & 提交同一道题 & 输出完整解法，且首行标注“仅供参考，请自行完成” \\
+  AC-003-6 & AI 服务返回错误 & 提交题目 & 显示失败提示，已输入的题目与条件保留，可重新请求 \\
+  \bottomrule
+\end{longtable}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=0.95cm,y=0.95cm]
+  \fill (0,0) circle (0.08);
+
+  \node[act] (in)  at (0,-1.4) {输入题目、已知条件与求助点};
+  \node[act] (chk) at (0,-2.9) {校验：非空、长度与内容合规};
+  \node[dec, text width=1.9cm] (d1)  at (0,-4.5) {输入有效？};
+  \node[act] (ret) at (0,-6.1) {检索课程知识片段（若已选课程）};
+  \node[dec, text width=2.1cm] (d2)  at (0,-7.7) {条件充分？};
+  \node[act] (gen) at (0,-9.3) {生成题意分析与分步提示（BR-03）};
+  \node[dec, text width=1.9cm] (d3)  at (0,-10.9) {学生追问？};
+  \node[act] (sav) at (0,-12.5) {保存会话并记录学术诚信标记};
+
+  \node[act, text width=3.4cm] (fix) at (5.8,-6.1) {提示补充或修正输入};
+  \node[act, text width=3.4cm] (exp) at (5.8,-10.9) {结合上下文解释该步骤};
+
+  % 主流程
+  \draw[flow] (0,-0.15) -- (in.north);
+  \draw[flow] (in) -- (chk);
+  \draw[flow] (chk) -- (d1);
+  \draw[flow] (d1) -- node[right,font=\scriptsize]{是} (ret);
+  \draw[flow] (ret) -- (d2);
+  \draw[flow] (d2) -- node[right,font=\scriptsize]{是} (gen);
+  \draw[flow] (gen) -- (d3);
+  \draw[flow] (d3) -- node[right,font=\scriptsize]{否} (sav);
+  \draw[flow] (sav) -- (0,-13.3);
+  \draw[black, thick] (0,-13.45) circle (0.14);
+  \draw[black, fill=white] (0,-13.45) circle (0.09);
+
+  % 分支与回环
+  \draw[flow] (d1.east) to[out=0,in=110] node[pos=0.55,above,font=\scriptsize]{否} (fix.north west);
+  \draw[flow] (d2.east) to[out=0,in=-110] node[pos=0.55,below,font=\scriptsize]{否} (fix.south west);
+  \draw[flow] (fix.east) to[out=0,in=25,looseness=0.5] (in.east);
+  \draw[flow] (d3) -- node[above,font=\scriptsize]{是} (exp);
+  \draw[flow] (exp.north) to[out=90,in=0] (gen.east);
+\end{tikzpicture}
+\caption{活动图：AI 作业辅导主流程与分支}
+\label{fig:act-tutor}
+\end{figure}
+
+活动图中“条件充分”为否时回到输入环节而非直接生成，是为了满足 BR-03 与 AC-003-3：系统不得把不确定条件当作已知事实。
+
+\subsection{其余功能需求}
+\label{sec:others}
+
+以下功能采用简化卡片描述，字段与主需求一致，用于覆盖剩余功能的最小可验证规格。
+
+\subsubsection{F01 学习进度管理}
+\label{srs-f01}
+
+\begin{itemize}
+  \item \textbf{输入}：学生进入进度页；可指定课程与时间范围（默认本学期）。
+  \item \textbf{处理}：按课程聚合已完成任务、习题作答数、问答次数与最近活动时间；数据来源为 F02、F03 的行为记录。
+  \item \textbf{输出}：每门课程的任务完成率、最近 7 天活动、待完成事项。
+  \item \textbf{异常}：无数据时展示空状态与引导，不显示 0\% 误导性完成率；数据延迟不超过 1 天。
+  \item \textbf{AC}：完成率 = 已完成任务数 / 已发布任务数，分母为 0 时不显示百分比；切换课程后统计范围随之变化。
+\end{itemize}
+
+\subsubsection{F03 智能习题生成}
+\label{srs-f03}
+
+\begin{itemize}
+  \item \textbf{输入}：课程、知识点、题型、难度、数量（1 至 20）；教师可附加参考范围。
+  \item \textbf{处理}：检索该知识点片段，生成题干、参考答案与解析，并标注生成依据；学生侧生成结果须标记“AI 生成，未经教师审核”。
+  \item \textbf{输出}：习题列表，支持单题重生成与导出。
+  \item \textbf{异常}：知识点无资料时提示补充资料，不生成无依据题目；数量超限时拒绝并提示区间。
+  \item \textbf{AC}：生成数量与请求一致；每题含答案与解析；无资料知识点返回明确提示；学生侧结果带未审核标记。
+\end{itemize}
+
+\subsubsection{F04 用户身份认证}
+\label{srs-f04}
+
+\begin{itemize}
+  \item \textbf{输入}：学生在统一身份认证平台完成登录后返回的身份信息。
+  \item \textbf{处理}：系统校验身份信息，首次登录建立本地账号并映射角色（学生、教师、管理员）；角色来自教务数据，不允许用户自选。
+  \item \textbf{输出}：登录状态与角色权限；登录状态空闲 8 小时后失效。
+  \item \textbf{异常}：认证失败提示原因类别但不泄露账号是否存在；登录状态过期时要求重新认证。
+  \item \textbf{AC}：未登录访问受保护功能时要求登录；越权操作被拒绝并记录审计；登录状态空闲 8 小时后需重新认证。
+\end{itemize}
+
+\subsubsection{F07 错题诊断分析}
+\label{srs-f07}
+
+\begin{itemize}
+  \item \textbf{输入}：学生在 F03 中的作答记录与对应知识点。
+  \item \textbf{处理}：按知识点聚合错误分布，识别高频错误类型（概念、计算、审题），输出薄弱知识点与练习建议。
+  \item \textbf{输出}：错题列表、错误类型分布、建议练习知识点。
+  \item \textbf{异常}：作答样本少于 5 条时提示数据不足，不输出结论性诊断。
+  \item \textbf{AC}：诊断结果可回溯到具体作答记录；样本不足时只展示原始错题，不给出薄弱项排名。
+\end{itemize}
+
+\subsubsection{F08 课程资料溯源}
+\label{srs-f08}
+
+\begin{itemize}
+  \item \textbf{输入}：一次已回答的消息标识，或回答中的引用标记。
+  \item \textbf{处理}：按引用中的资料标识、片段顺序与页码定位原文段落，返回高亮片段。
+  \item \textbf{输出}：资料名称、页码或段落位置、原文高亮、所属课程。
+  \item \textbf{异常}：资料已被删除时显示“资料已下线”，不展示失效内容；引用不存在时按 BR-04 记录异常。
+  \item \textbf{AC}：点击引用可在 3 秒内打开原文并高亮对应段落；回答未使用资料时不出现引用入口。
+\end{itemize}
+
+\subsubsection{F09 个性化学习计划}
+\label{srs-f09}
+
+\begin{itemize}
+  \item \textbf{输入}：学习目标、可用学习时间、已选课程与 F01 的进度数据。
+  \item \textbf{处理}：按周生成任务清单，标注优先级与预计时长；每周自动重算，允许学生手动调整。
+  \item \textbf{输出}：周计划、完成情况、调整记录。
+  \item \textbf{异常}：缺少目标或时间输入时使用默认值并明确标注；进度数据缺失时只排布课程任务，不做时间预测。
+  \item \textbf{AC}：计划项可勾选完成并回写 F01；重算不覆盖学生手动调整项；计划不给出成绩承诺类表述。
+\end{itemize}
+
+\subsubsection{F10 课程选择与切换}
+\label{srs-f10}
+
+\begin{itemize}
+  \item \textbf{输入}：学生在课程列表中选择课程。
+  \item \textbf{处理}：系统按选课关系过滤可访问课程，切换后更新会话的课程上下文，后续检索限定在新课程内。
+  \item \textbf{输出}：当前课程标识、该课程的资料入口与问答上下文。
+  \item \textbf{异常}：未选修课程不出现在列表；直接请求未选修课程时拒绝访问。
+  \item \textbf{AC}：切换课程后新提问只检索新课程资料；未选修课程不出现在列表中；切换不影响历史会话的原有上下文。
+\end{itemize}
+
+% =====================================================================
+\section{非功能需求}
+\label{sec:nfr}
+
+以下指标作为设计与验收约束，取值以单校区、单学期、日活 5000 学生为假设规模。
+
+\begin{longtable}{@{}L{2.0cm}L{2.4cm}L{5.2cm}L{3.0cm}L{2.0cm}@{}}
+  \toprule
+  \textbf{编号} & \textbf{类别} & \textbf{需求} & \textbf{指标} & \textbf{验证方式} \\
+  \midrule
+  \endhead
+  NFR-P-01 & 性能 & 问答首字响应 & P95 $\leq$ 3 秒 & 压测 \\
+  NFR-P-02 & 性能 & 完整回答生成 & P95 $\leq$ 20 秒 & 压测 \\
+  NFR-P-03 & 性能 & 知识检索 & P95 $\leq$ 800 毫秒 & 压测 \\
+  NFR-P-04 & 性能 & 20 MB 资料处理入库 & P95 $\leq$ 120 秒 & 集成测试 \\
+  NFR-P-05 & 性能 & 并发会话 & 500 并发，错误率 $<$ 1\% & 压测 \\
+  NFR-P-06 & 性能 & 首屏加载 & 4G 网络下 $\leq$ 2.5 秒 & 前端测量 \\
+  NFR-R-01 & 可靠性 & 服务可用性 & 教学时段月度可用性 $\geq$ 99.5\% & 监控统计 \\
+  NFR-R-02 & 可靠性 & AI 服务降级 & 故障时 30 秒内提示并保留输入 & 故障演练 \\
+  NFR-R-03 & 可靠性 & 资料与索引一致性 & 资料状态与检索内容一致率 100\%，失败可重试 & 集成测试 \\
+  NFR-R-04 & 可靠性 & 数据持久性 & 对话与资料记录不丢失，备份可恢复至 24 小时内 & 恢复演练 \\
+  NFR-S-01 & 安全 & 身份认证 & 通过学校统一身份认证登录，不提供本地密码登录 & 安全测试 \\
+  NFR-S-02 & 安全 & 登录状态管理 & 空闲 8 小时失效，凭据不得以明文形式保存在客户端 & 安全测试 \\
+  NFR-S-03 & 安全 & 越权防护 & 课程数据仅对已选课学生或任课教师可见，越权访问被拒绝并审计 & 渗透测试 \\
+  NFR-S-04 & 安全 & 传输与存储 & 传输加密（不低于 TLS 1.2），敏感信息加密存储 & 配置核查 \\
+  NFR-S-05 & 隐私 & 日志脱敏 & 不记录可识别学生身份的明文信息，不记录问答正文 & 日志抽查 \\
+  NFR-S-06 & 隐私 & 数据留存 & 对话保留 1 学年后匿名化，学生可申请提前删除 & 流程核查 \\
+  NFR-U-01 & 可用性 & 可访问性 & 键盘可完成主要流程，文本对比度 $\geq$ 4.5:1 & 人工评审 \\
+  NFR-U-02 & 可用性 & 移动端适配 & 375 px 宽度下无横向滚动，主流程可完成 & 兼容测试 \\
+  NFR-M-01 & 可维护性 & 可追溯性 & 任一回答可关联到会话、引用的知识片段与生成记录 & 链路核查 \\
+  NFR-M-02 & 可维护性 & 质量评估 & 每两周抽样不少于 200 条回答评估引用准确率与拒答率 & 质量报告 \\
+  \bottomrule
+\end{longtable}
+
+% =====================================================================
+\section{领域模型}
+\label{sec:domain}
+
+\subsection{领域类图}
+
+类图给出与需求直接相关的业务实体及其多重性，作为设计输入；技术实现所需的属性与操作不在需求层规定。
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+
+  % 左列：学生与会话
+  \node[cls, anchor=north] (stu) at (-5.4,12.6) {%
+    \textbf{Student}\umlsep
+    学号\par
+    姓名\par
+    已选课程: Course[*]};
+  \node[cls, anchor=north] (conv) at (-5.4,8.6) {%
+    \textbf{Conversation}\umlsep
+    创建时间\par
+    所属课程\par
+    消息: Message[*]};
+  \node[cls, anchor=north] (msg) at (-5.4,4.6) {%
+    \textbf{Message}\umlsep
+    角色: 学生 / 助手\par
+    内容\par
+    创建时间};
+
+  % 中列：教师与报告
+  \node[cls, anchor=north] (tea) at (0,12.6) {%
+    \textbf{Teacher}\umlsep
+    工号\par
+    姓名\par
+    任课课程: Course[*]};
+  \node[cls, anchor=north] (enr) at (0,8.6) {%
+    \textbf{Enrollment}\umlsep
+    学期\par
+    选课状态};
+  \node[cls, anchor=north] (cit) at (0,4.6) {%
+    \textbf{Citation}\umlsep
+    页码\par
+    相关度\par
+    引用位置};
+
+  % 右列：课程与知识库
+  \node[cls, anchor=north] (crs) at (5.4,12.6) {%
+    \textbf{Course}\umlsep
+    课程编号\par
+    课程名\par
+    学期\par
+    学术诚信策略};
+  \node[cls, anchor=north] (mat) at (5.4,8.6) {%
+    \textbf{CourseMaterial}\umlsep
+    标题\par
+    格式\par
+    大小\par
+    处理状态\par
+    版本};
+  \node[cls, anchor=north] (chk) at (5.4,4.6) {%
+    \textbf{KnowledgeChunk}\umlsep
+    片段顺序\par
+    页码\par
+    内容节选};
+
+  % 关系
+  \draw[-{Stealth}, semithick] (stu.south) -- node[right,font=\scriptsize]{1} node[pos=0.85,right,font=\scriptsize]{0..*} (conv.north);
+  \draw[-{Stealth}, semithick] (conv.south) -- node[right,font=\scriptsize]{1} node[pos=0.85,right,font=\scriptsize]{1..*} (msg.north);
+  \draw[-{Stealth}, semithick] (msg.east) -- node[above,font=\scriptsize]{0..*} node[pos=0.85,above,font=\scriptsize]{0..1} (cit.west);
+
+  \draw[-{Stealth}, semithick] (stu.south east) -- node[above,font=\scriptsize,sloped]{0..*} (enr.north west);
+  \draw[-{Stealth}, semithick] (enr.east) -- node[above,font=\scriptsize,sloped]{0..*} node[pos=0.85,above,font=\scriptsize,sloped]{1} (crs.south west);
+  \draw[-{Stealth}, semithick] (tea.east) -- node[above,font=\scriptsize]{0..*} node[pos=0.9,above,font=\scriptsize]{1} (crs.north west);
+
+  \draw[-{Stealth}, semithick] (crs.south) -- node[right,font=\scriptsize]{1} node[pos=0.9,right,font=\scriptsize]{0..*} (mat.north);
+  \draw[-{Stealth}, semithick] (mat.south) -- node[right,font=\scriptsize]{1} node[pos=0.9,right,font=\scriptsize]{1..*} (chk.north);
+  \draw[-{Stealth}, semithick] (cit.east) -- node[above,font=\scriptsize]{1} (chk.west);
+\end{tikzpicture}
+\caption{领域类图（核心实体与多重性）}
+\label{fig:class}
+\end{figure}
+
+\subsection{实体约束}
+
+\begin{longtable}{@{}L{3.4cm}L{11.8cm}@{}}
+  \toprule
+  \textbf{实体} & \textbf{关键约束} \\
+  \midrule
+  \endhead
+  Course & 课程标识唯一；同一学期同名课程由教务数据保证不重复；学术诚信策略控制 BR-03 的严格程度。 \\
+  Enrollment & （学生，课程，学期）唯一；只有有效选课记录才能通过 BR-01 的数据隔离校验。 \\
+  CourseMaterial & 同一课程内内容相同的文件视为重复；状态只能沿状态图（图 \ref{fig:state-material}）迁移；删除为不可恢复的业务删除并保留审计。 \\
+  KnowledgeChunk & （资料，片段顺序）唯一；只有所属资料状态为“可用”时才可被检索；片段必须保留页码。 \\
+  Conversation & 绑定一名学生与一门课程；学生只能访问自己的会话；课程切换不改变已存在会话的绑定。 \\
+  Message & 角色只能是学生或助手；助手消息的引用列表可以为空，但不得包含不存在的片段。 \\
+  Citation & 必须引用真实存在的片段；资料下线后引用保留但标记失效。 \\
+  \bottomrule
+\end{longtable}
+
+% =====================================================================
+\section{需求追踪矩阵}
+
+矩阵用于确认每条需求都有模型与验收方式支撑，避免出现“写了需求但没有验证手段”或“建了模型却没有需求来源”的情况。
+
+\begin{longtable}{@{}C{1.4cm}L{3.2cm}L{2.3cm}L{2.6cm}L{2.8cm}L{2.2cm}@{}}
+  \toprule
+  \textbf{需求} & \textbf{用例} & \textbf{模型} & \textbf{验收标准} & \textbf{业务规则} & \textbf{验证方式} \\
+  \midrule
+  \endhead
+  F01 & 学习进度管理 & 图 7 & 卡片 AC & BR-01 & 演示 + 数据核对 \\
+  F02 & AI 智能问答 & 图 \ref{fig:seq-qa}、图 \ref{fig:usecase} & AC-001-1 至 6 & BR-01、02、04、05 & 功能测试 + 压测 \\
+  F03 & 智能习题生成 & 图 7 & 卡片 AC & BR-02、06 & 功能测试 \\
+  F04 & 用户身份认证 & 用例前置条件 & 卡片 AC & BR-01 & 安全测试 \\
+  F05 & 课程知识库管理 & 图 \ref{fig:seq-material}、图 \ref{fig:state-material} & AC-002-1 至 7 & BR-01、04、06 & 集成测试 \\
+  F06 & AI 作业辅导 & 图 \ref{fig:act-tutor}、图 \ref{fig:usecase} & AC-003-1 至 6 & BR-02、03、05 & 人工评审 + 功能测试 \\
+  F07 & 错题诊断分析 & 图 7 & 卡片 AC & BR-01 & 功能测试 \\
+  F08 & 课程资料溯源 & 图 3、图 7 & 卡片 AC & BR-02、04 & 功能测试 \\
+  F09 & 个性化学习计划 & 图 7 & 卡片 AC & BR-05 & 演示 + 评审 \\
+  F10 & 课程选择与切换 & 图 \ref{fig:layer}、图 \ref{fig:usecase} & 卡片 AC & BR-01 & 功能测试 \\
+  NFR-P & 全部 & 图 3 & — & BR-02 & 压测 \\
+  NFR-S & F04、F05、F02 & — & — & BR-01、05 & 渗透测试 + 配置核查 \\
+  \bottomrule
+\end{longtable}
+
+% =====================================================================
+\section{假设、约束与待确认事项}
+
+\subsection{假设}
+
+\begin{enumerate}
+  \item 学校统一身份认证平台提供标准化的登录与身份信息接口，并能返回稳定的学号与角色。
+  \item 教务系统可提供选课关系与任课关系，作为 BR-01 的判定依据。
+  \item 课程资料以文本型文件为主，扫描件占比低；扫描件按备选流 A3 处理，OCR 不在本期范围。
+  \item 假设规模为单校区、单学期日活 5000 学生、500 并发会话，超过该规模需重新评估 NFR-P 指标。
+\end{enumerate}
+
+\subsection{约束}
+
+\begin{enumerate}
+  \item AI 推理服务为外部依赖，其限流与配额直接影响异常流 E2/E3 的表现。
+  \item 对话内容不得用于训练公共模型，且需满足学校数据留存规定（BR-05）。
+  \item 系统不提供绕过学术诚信策略的接口；教师开启完整解析的行为须留痕。
+\end{enumerate}
+
+\subsection{待确认事项}
+
+\begin{longtable}{@{}C{1.2cm}L{9.0cm}L{4.6cm}@{}}
+  \toprule
+  \textbf{编号} & \textbf{问题} & \textbf{影响} \\
+  \midrule
+  \endhead
+  Q-01 & 学校统一身份认证提供何种登录方式，角色信息由认证平台返回还是需向教务系统查询 & 决定 F04 的接口范围与联调工作 \\
+  Q-02 & “允许完整解析”的配置粒度是课程级还是作业级 & 决定 BR-03 的配置模型 \\
+  Q-03 & 对话保留 1 学年后匿名化，是否允许学生提前删除全部记录 & 决定 NFR-S-06 的实现范围 \\
+  Q-04 & 知识库是否需要支持同一课程多版本教材并行检索 & 决定课程资料与知识片段的组织方式 \\
+  Q-05 & 教师能否查看本课程下学生的问答记录，范围如何限定 & 决定 F05 的审计视图与隐私边界 \\
+  Q-06 & 引用准确率的验收抽样由谁执行，样本如何留存 & 决定 NFR-M-02 的落地方式 \\
+  \bottomrule
+\end{longtable}
+
+\end{document}
