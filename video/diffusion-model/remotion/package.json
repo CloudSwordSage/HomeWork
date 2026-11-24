@@ -1,0 +1,27 @@
+{
+  "name": "diffusion-model-video",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "3 分钟扩散模型原理科普视频（Remotion）",
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts DiffusionExplainer out/diffusion-model.mp4",
+    "still": "remotion still src/index.ts DiffusionExplainer out/poster.png --frame=1500",
+    "tts": "node --env-file=.env scripts/generate-voiceover.mjs",
+    "tts:force": "node --env-file=.env scripts/generate-voiceover.mjs --force",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.545",
+    "@remotion/media": "4.0.545",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.545"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}

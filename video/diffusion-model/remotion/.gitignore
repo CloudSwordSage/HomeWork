@@ -1,0 +1,11 @@
+node_modules/
+.venv/
+out/
+.env
+.DS_Store
+*.log
+
+# 生成物：音频体积大且可随时用 npm run tts 重新生成
+public/audio/*.mp3
+public/audio/subtitles.json
+src/data/voiceover.generated.json
