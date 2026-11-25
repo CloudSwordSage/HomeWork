@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "准备 build 目录",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "New-Item -ItemType Directory -Force -Path '${workspaceFolder}\\build' | Out-Null"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "clear": false
+      }
+    },
+    {
+      "label": "g++: 编译当前文件 (C++20)",
+      "type": "cppbuild",
+      "command": "D:\\msys64\\ucrt64\\bin\\g++.exe",
+      "args": [
+        "-std=c++20",
+        "-g",
+        "${file}",
+        "-o",
+        "${workspaceFolder}/build/${fileBasenameNoExtension}.exe"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "dependsOn": "准备 build 目录",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "用 MSYS2 UCRT64 的 g++ 以 C++20 编译当前打开的 .cpp，输出到 build 目录（供 gdb 调试）"
+    }
+  ]
+}
