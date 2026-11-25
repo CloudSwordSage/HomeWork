@@ -5,6 +5,7 @@
  * @Desc    : 二叉树
  */
 
+#include <sstream>
 #include <iostream>
 #include <queue>
 
@@ -26,16 +27,18 @@ class BinaryTree {
     private:
     Node * root = nullptr;
 
-    auto createTree() -> Node * {
+    auto createTree(std::istream & in) -> Node * {
         char data;
         std::cout << "输入节点数据(输入#表示空节点): ";
-        std::cin >> data;
+        if (!(in >> data)) {
+            return nullptr;
+        }
         if (data == '#') {
             return nullptr;
         }
         Node * node = createNode(data);
-        node->left = createTree();
-        node->right = createTree();
+        node->left = createTree(in);
+        node->right = createTree(in);
         return node;
     }
 
@@ -79,8 +82,8 @@ class BinaryTree {
     BinaryTree() {
     }
 
-    auto buildTree() {
-        this->root = createTree();
+    auto buildTree(std::istream & in) {
+        this->root = createTree(in);
     }
 
     auto preOrderTraversal() {
@@ -131,7 +134,9 @@ class BinaryTree {
 int main() {
     BinaryTree tree;
     std::cout << "构建二叉树: \n";
-    tree.buildTree();
+    std::istringstream in("ABD#G##E##CF###");
+    tree.buildTree(in);
+    std::cout << "\n=== 遍历测试 ===\n";
     std::cout << "前序遍历: ";
     tree.preOrderTraversal();
     std::cout << "中序遍历: ";
